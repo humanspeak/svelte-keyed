@@ -12,12 +12,12 @@
 A **writable** derived store for objects and arrays!
 
 ```js
-const user = writable({ name: { first: 'Rich', last: 'Harris' } });
-const firstName = keyed(user, 'name.first');
+const user = writable({ name: { first: 'Rich', last: 'Harris' } })
+const firstName = keyed(user, 'name.first')
 
-$firstName = 'Bryan';
+$firstName = 'Bryan'
 
-console.log($user); // { name: { first: 'Bryan', last: 'Harris' } };
+console.log($user) // { name: { first: 'Bryan', last: 'Harris' } };
 ```
 
 ## Installation
@@ -35,7 +35,7 @@ Since Svelte automatically bundles all required dependencies, you only need to i
 Properties are accessed with dot notation, and arrays can be indexed with bracket notation.
 
 ```js
-const email = keyed(settings, 'profiles[0].email');
+const email = keyed(settings, 'profiles[0].email')
 ```
 
 ### Nullable parents
@@ -44,18 +44,18 @@ If the parent store is nullable, then the child store will also be nullable.
 
 ```ts
 type User = {
-  name: {
-    first: string;
-    last: string;
-  };
-  relations: {
-    partner?: User;
-  };
-};
+    name: {
+        first: string
+        last: string
+    }
+    relations: {
+        partner?: User
+    }
+}
 
-const maybeUser = writable<User | undefined>(undefined);
+const maybeUser = writable<User | undefined>(undefined)
 // Writable<string | undefined>
-const firstName = keyed(maybeUser, 'name.first');
+const firstName = keyed(maybeUser, 'name.first')
 ```
 
 ### Nullable properties
@@ -63,9 +63,9 @@ const firstName = keyed(maybeUser, 'name.first');
 Nullable properties are accessed with [optional chaining](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining) behaviour.
 
 ```ts
-const user = writable(initUser);
+const user = writable(initUser)
 // Writable<Name | undefined>
-const partnerName = keyed(user, 'relations.partner.name');
+const partnerName = keyed(user, 'relations.partner.name')
 ```
 
 ### TypeScript
@@ -73,9 +73,9 @@ const partnerName = keyed(user, 'relations.partner.name');
 `keyed` infers the return type of the keyed store from the keypath.
 
 ```ts
-const user = writable(initUser);
+const user = writable(initUser)
 // Writable<string>
-const firstName = keyed(user, 'name.first');
+const firstName = keyed(user, 'name.first')
 ```
 
 `keyed` will also try to guess all possible keypaths up to a depth limit of 3.
@@ -97,9 +97,9 @@ _This limit is due to a TypeScript limitation where structured types must be gen
 Type hints will not be provided for keypaths with a depth greater than 3 but this does not affect the return type.
 
 ```ts
-const user = writable(user);
+const user = writable(user)
 // Writable<string | undefined>
-const firstName = keyed(user, 'relations.partner.name.first');
+const firstName = keyed(user, 'relations.partner.name.first')
 ```
 
 ## Motivations
@@ -107,7 +107,7 @@ const firstName = keyed(user, 'relations.partner.name.first');
 We usually read and write properties of an object store with [auto-subscriptions](https://svelte.dev/tutorial/auto-subscriptions).
 
 ```svelte
-<input bind:value={$name.first}/>
+<input bind:value={$name.first} />
 ```
 
 However, auto-subscriptions are isolated to a Svelte component. `svelte-keyed` aims to solve several common limitations listed below.
@@ -119,7 +119,7 @@ Often, we want to set a property or element of a store into component context, t
 ```svelte
 <!-- Settings.svelte -->
 <script>
-  setContext('profileSettings', keyed(settings, 'profile'));
+    setContext('profileSettings', keyed(settings, 'profile'))
 </script>
 
 <GeneralSettings />
@@ -129,7 +129,7 @@ Often, we want to set a property or element of a store into component context, t
 ```svelte
 <!-- ProfileSettings.svelte -->
 <script>
-  const profileSettings = getContext('profileSettings');
+    const profileSettings = getContext('profileSettings')
 </script>
 
 <input type="text" bind:value={$profileSettings.username} />
@@ -142,8 +142,8 @@ One important method to reduce clutter on your component is to extract functiona
 ```svelte
 <!-- Settings.svelte -->
 <script>
-  const stats = writable({ userClicks: 0, userTaps: 0 });
-  const clicks = keyed(stats, 'userClicks');
+    const stats = writable({ userClicks: 0, userTaps: 0 })
+    const clicks = keyed(stats, 'userClicks')
 </script>
 
 <div use:trackClicks={clicks} />
@@ -152,14 +152,14 @@ One important method to reduce clutter on your component is to extract functiona
 
 ```js
 export const trackClicks = (node, clicks) => {
-  const listen = () => {
-    clicks.update(($clicks) => $clicks + 1);
-  };
-  node.addEventListener('click', listen);
-  return {
-    destroy() {
-      node.removeEventListener('click', listen);
-    },
-  };
-};
+    const listen = () => {
+        clicks.update(($clicks) => $clicks + 1)
+    }
+    node.addEventListener('click', listen)
+    return {
+        destroy() {
+            node.removeEventListener('click', listen)
+        }
+    }
+}
 ```
