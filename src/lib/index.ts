@@ -1,5 +1,4 @@
-import { derived } from 'svelte/store'
-import type { Updater, Writable } from 'svelte/store'
+import { derived, type Updater, type Writable } from 'svelte/store'
 import type { Get } from 'type-fest'
 
 export const getTokens = (key: string): string[] => {
@@ -29,11 +28,20 @@ const clonedWithPrototype = <T extends object>(source: T): T => {
     return clone
 }
 
-export function keyed<Parent extends object, Path extends string>(parent: Writable<Parent>, path: Path | KeyPath<Parent>): Writable<Get<Parent, Path>>
+export function keyed<Parent extends object, Path extends string>(
+    parent: Writable<Parent>,
+    path: Path | KeyPath<Parent>
+): Writable<Get<Parent, Path>>
 
-export function keyed<Parent extends object, Path extends string>(parent: Writable<Parent | undefined | null>, path: Path | KeyPath<Parent>): Writable<Get<Parent, Path> | undefined>
+export function keyed<Parent extends object, Path extends string>(
+    parent: Writable<Parent | undefined | null>,
+    path: Path | KeyPath<Parent>
+): Writable<Get<Parent, Path> | undefined>
 
-export function keyed<Parent extends object, Path extends string>(parent: Writable<Parent | undefined | null>, path: Path | KeyPath<Parent>): Writable<Get<Parent, Path> | undefined> {
+export function keyed<Parent extends object, Path extends string>(
+    parent: Writable<Parent | undefined | null>,
+    path: Path | KeyPath<Parent>
+): Writable<Get<Parent, Path> | undefined> {
     const keyTokens = getTokens(path)
     if (keyTokens.some((token) => token === '__proto__')) {
         throw new Error('key cannot include "__proto__"')
@@ -81,8 +89,18 @@ type KeyPath_<T, D extends number, S extends unknown[]> = D extends S['length']
     ? never
     : T extends object
       ? {
-            [K in keyof T]-?: K extends string ? `${K}` | Join<K, KeyPath_<T[K], D, [never, ...S]>> : K extends number ? `[${K}]` | Join<`[${K}]`, KeyPath_<T[K], D, [never, ...S]>> : never
+            [K in keyof T]-?: K extends string
+                ? `${K}` | Join<K, KeyPath_<T[K], D, [never, ...S]>>
+                : K extends number
+                  ? `[${K}]` | Join<`[${K}]`, KeyPath_<T[K], D, [never, ...S]>>
+                  : never
         }[keyof T]
       : ''
 
-type Join<K, P> = K extends string | number ? (P extends string | number ? (P extends `[${string}` ? `${K}${P}` : `${K}${'' extends P ? '' : '.'}${P}`) : never) : never
+type Join<K, P> = K extends string | number
+    ? P extends string | number
+        ? P extends `[${string}`
+            ? `${K}${P}`
+            : `${K}${'' extends P ? '' : '.'}${P}`
+        : never
+    : never
