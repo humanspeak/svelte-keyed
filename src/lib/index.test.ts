@@ -313,13 +313,13 @@ describe('prevent prototype pollution', () => {
         const parent = writable({})
         expect(() => {
             keyed(parent, '__proto__' as never)
-        }).toThrowError('key cannot include "__proto__"')
+        }).toThrowError('Key contains forbidden property name "__proto__"')
         expect(() => {
             keyed(parent, '__proto__.name' as never)
-        }).toThrowError('key cannot include "__proto__"')
+        }).toThrowError('Key contains forbidden property name "__proto__"')
         expect(() => {
             keyed(parent, 'name.__proto__' as never)
-        }).toThrowError('key cannot include "__proto__"')
+        }).toThrowError('Key contains forbidden property name "__proto__"')
     })
 })
 
