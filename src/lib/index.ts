@@ -52,12 +52,14 @@ export const getTokens = (key: string, shouldCache = true): string[] => {
  * @param keyTokens - Array of property names forming the path
  * @returns The value at the specified path or undefined if not found
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getNested = (root: unknown, keyTokens: string[]): any => {
     // Safety check: ensure root is an object
     if (typeof root !== 'object' || root === null) {
         return undefined
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let current: any = root
     for (const key of keyTokens) {
         // Security: Validate key format to prevent injection attacks
@@ -98,8 +100,8 @@ const clonedWithPrototype = <T extends object>(source: T): T => {
  * Version 1: For non-nullable parent stores
  */
 export function keyed<Parent extends object, Path extends string>(
-    parent: Writable<Parent>,
-    path: Path | KeyPath<Parent>
+    parent: Writable<Parent>, // eslint-disable-line no-unused-vars
+    path: Path | KeyPath<Parent> // eslint-disable-line no-unused-vars
 ): Writable<Get<Parent, Path>>
 
 /**
@@ -107,8 +109,8 @@ export function keyed<Parent extends object, Path extends string>(
  * Version 2: For nullable parent stores
  */
 export function keyed<Parent extends object, Path extends string>(
-    parent: Writable<Parent | undefined | null>,
-    path: Path | KeyPath<Parent>
+    parent: Writable<Parent | undefined | null>, // eslint-disable-line no-unused-vars
+    path: Path | KeyPath<Parent> // eslint-disable-line no-unused-vars
 ): Writable<Get<Parent, Path> | undefined>
 
 /**

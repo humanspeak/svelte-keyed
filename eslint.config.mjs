@@ -28,7 +28,7 @@ export default [
             '!**/.env.example',
             '**/pnpm-lock.yaml',
             '**/package-lock.json',
-            '.test.ts',
+            '**/*.test.ts',
             'dist'
         ]
     },
