@@ -7,28 +7,38 @@ import type { Get } from 'type-fest'
 const tokenCache = new Map<string, string[]>()
 
 /**
- * Parses a string path into an array of property tokens.
+ * Parses a path string into an array of property tokens. Handles both dot notation
+ * and array bracket notation.
  *
- * @param {string} key - The path string to parse
- * @param {boolean} [shouldCache=true] - Whether to cache the parsed result
+ * @param {string} key - The path string to parse (e.g., 'users[0].profile.name')
+ * @param {boolean} [shouldCache=true] - Enable/disable caching of parsed results
  * @returns {string[]} Array of path segments
+ * @throws {Error} If the path string is empty or invalid
  *
  * @example
- * getTokens('users.0.name') // Returns ['users', '0', 'name']
- * getTokens('items[0].id') // Returns ['items', '0', 'id']
+ * // Dot notation
+ * getTokens('user.profile.name') // → ['user', 'profile', 'name']
+ *
+ * // Array notation
+ * getTokens('users[0].posts[1]') // → ['users', '0', 'posts', '1']
+ *
+ * // Mixed notation
+ * getTokens('items[0].tags.primary') // → ['items', '0', 'tags', 'primary']
  */
 export const getTokens = (key: string, shouldCache = true): string[] => {
+    if (!key) {
+        throw new Error('Path string cannot be empty')
+    }
+
     // Check cache first if caching is enabled
-    if (tokenCache.has(key) && shouldCache) {
+    if (shouldCache && tokenCache.has(key)) {
         return tokenCache.get(key)!
     }
 
     // Convert array notation [0] to dot notation .0
-    // Example: "users[0]" -> "users.0"
     let keyWithoutBracket = key.replace(/\[(\d+)\]/g, '.$1')
 
     // Remove leading dot if present
-    // Example: ".users" -> "users"
     if (keyWithoutBracket.startsWith('.')) {
         keyWithoutBracket = keyWithoutBracket.slice(1)
     }
