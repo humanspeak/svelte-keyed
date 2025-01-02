@@ -1,0 +1,223 @@
+name: Publish to NPM
+
+on:
+    pull_request:
+        types: [closed]
+        branches:
+            - main
+        paths-ignore:
+            - '.github/**'
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                node-version: [18, 20, 22]
+        permissions:
+            contents: read
+            packages: write
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  persist-credentials: false
+                  token: ${{ secrets.ACTIONS_KEY }}
+
+            - name: Use Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ matrix.node-version }}
+
+            - name: Install
+              run: npm ci
+
+            - name: Test
+              run: npm test
+
+            - name: Cache dependencies
+              uses: actions/cache@v3
+              with:
+                  path: ~/.npm
+                  key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
+                  restore-keys: |
+                      ${{ runner.os }}-node-${{ matrix.node-version }}-
+                      ${{ runner.os }}-node-
+
+    publish-github-packages:
+        needs: build
+        if: |
+            (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
+            (github.event_name == 'push' && github.ref == 'refs/heads/main')
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            packages: write
+            issues: write
+            pull-requests: write
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  persist-credentials: false
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  fetch-depth: 0
+
+            - name: Use Node.js - 22
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  registry-url: 'https://registry.npmjs.org'
+                  scope: '@humanspeak'
+
+            - name: Install
+              run: npm ci
+
+            - name: Determine version bump type
+              id: version-type
+              env:
+                  HAS_MAJOR: ${{ contains(github.event.pull_request.labels.*.name, 'major') }}
+                  HAS_MINOR: ${{ contains(github.event.pull_request.labels.*.name, 'minor') }}
+              run: |
+                  if [ "$HAS_MAJOR" = "true" ]; then
+                    BUMP_TYPE="major"
+                  elif [ "$HAS_MINOR" = "true" ]; then
+                    BUMP_TYPE="minor"
+                  else
+                    BUMP_TYPE="patch"
+                  fi
+
+                  # Validate that bump type is one of the allowed values
+                  case "$BUMP_TYPE" in
+                    "major"|"minor"|"patch")
+                      echo "bump=$BUMP_TYPE" >> $GITHUB_OUTPUT
+                      ;;
+                    *)
+                      echo "Invalid version bump type"
+                      exit 1
+                      ;;
+                  esac
+
+            - name: Import GPG key
+              id: import_gpg
+              uses: crazy-max/ghaction-import-gpg@v6
+              with:
+                  gpg_private_key: ${{ secrets.ACTIONS_GPG_PRIVATE_KEY }}
+                  passphrase: ${{ secrets.ACTIONS_GPG_PASSPHRASE }}
+                  git_user_signingkey: true
+                  git_commit_gpgsign: true
+                  git_tag_gpgsign: true
+                  git_config_global: true
+
+            - name: Bump version
+              id: version
+              env:
+                  PR_TITLE: ${{ github.event.pull_request.title }}
+                  PR_URL: ${{ github.event.pull_request.html_url }}
+                  BUMP_TYPE: ${{ steps.version-type.outputs.bump }}
+                  GITHUB_TOKEN: ${{ secrets.ACTIONS_KEY }}
+                  GPG_KEY_ID: ${{ steps.import_gpg.outputs.keyid }}
+              run: |
+                  # Validate GPG key ID format first
+                  if [[ ! "$GPG_KEY_ID" =~ ^[A-F0-9]{16}$ ]]; then
+                      echo "Invalid GPG key ID format"
+                      exit 1
+                  fi
+
+                  # Configure git with validated credentials
+                  git config --global user.name "GitHub Actions Bot"
+                  git config --global user.email "jason@humanspeak.com"
+                  git config --global commit.gpgsign true
+                  git config --global user.signingkey "$GPG_KEY_ID"
+
+                  # Set up authentication for push
+                  git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+
+                  # Validate bump type for security
+                  case "$BUMP_TYPE" in
+                    "major"|"minor"|"patch") ;;
+                    *)
+                      echo "Invalid version bump type"
+                      exit 1
+                      ;;
+                  esac
+
+                  # Get the new version number
+                  NEW_VERSION=$(npm version "$BUMP_TYPE" --no-git-tag-version)
+                  echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+                  # Escape special characters in PR title and URL
+                  ESCAPED_TITLE=$(echo "$PR_TITLE" | sed 's/[`$"\]/\\&/g')
+                  ESCAPED_URL=$(echo "$PR_URL" | sed 's/[`$"\]/\\&/g')
+
+                  # Commit the version changes
+                  git add package.json package-lock.json
+                  git commit -m "Bump version to ${NEW_VERSION} [skip ci]"
+
+                  # Create an annotated tag with release notes
+                  git tag -a "${NEW_VERSION}" -m "Release ${NEW_VERSION}
+
+                  Changes in this Release:
+                  - ${ESCAPED_TITLE}
+
+                  PR: ${ESCAPED_URL}"
+
+                  # Push changes
+                  git push
+                  git push --tags
+
+            - name: Create Release
+              id: create_release
+              uses: softprops/action-gh-release@v1
+              with:
+                  tag_name: ${{ steps.version.outputs.new_version }}
+                  name: Release ${{ steps.version.outputs.new_version }}
+                  body: |
+                      Changes in this Release
+                      - ${{ github.event.pull_request.title }}
+
+                      For more details, see the [Pull Request](${{ github.event.pull_request.html_url }})
+                  draft: false
+                  prerelease: false
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Publish
+              run: |
+                  # Ensure we're publishing to the correct scope
+                  rm -f ./.npmrc
+                  npm config set @humanspeak:registry https://registry.npmjs.org/
+                  npm publish --access public
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}
+
+            - name: Cleanup on failure
+              if: failure() && steps.create_release.outcome == 'success'
+              env:
+                  RELEASE_VERSION: ${{ steps.version.outputs.new_version }}
+                  GITHUB_TOKEN: ${{ secrets.ACTIONS_KEY }}
+              run: |
+                  # Validate version format first
+                  if [[ ! "$RELEASE_VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                    echo "Invalid version format: $RELEASE_VERSION"
+                    exit 1
+                  fi
+
+                  # Proceed with cleanup only if validation passes
+                  gh release delete "$RELEASE_VERSION" --yes
+                  git tag -d "$RELEASE_VERSION"
+                  git push --delete origin "$RELEASE_VERSION"
+
+            - name: Notify on failure
+              if: failure()
+              uses: actions/github-script@v7
+              with:
+                  github-token: ${{ secrets.ACTIONS_KEY }}
+                  script: |
+                      github.rest.issues.createComment({
+                          issue_number: context.issue.number,
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          body: '❌ Release workflow failed. Please check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+                      })
