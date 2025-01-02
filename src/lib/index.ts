@@ -4,7 +4,48 @@ import type { Get } from 'type-fest'
 
 // Cache to store parsed path tokens for better performance
 // Example: "user.profile.name" -> ["user", "profile", "name"]
-const tokenCache = new Map<string, string[]>()
+type CacheEntry = {
+    tokens: string[]
+    lastAccessed: number
+}
+
+const tokenCache = new Map<string, CacheEntry>()
+const MAX_CACHE_SIZE = 1000
+const CACHE_TTL = 1000 * 60 * 5 // 5 minutes
+
+// Add these custom error classes at the top of the file
+export class KeyedPathError extends Error {
+    constructor(message: string) {
+        super(message)
+        this.name = 'KeyedPathError'
+    }
+}
+
+export class EmptyPathError extends KeyedPathError {
+    constructor() {
+        super('Path string cannot be empty')
+    }
+}
+
+export class InvalidPathFormatError extends KeyedPathError {
+    constructor(detail?: string) {
+        super(`Invalid path format${detail ? `: ${detail}` : ''}`)
+    }
+}
+
+export class InvalidPropertyKeyError extends KeyedPathError {
+    constructor(key: string) {
+        super(
+            `Invalid property key format: "${key}". Keys must be alphanumeric, underscore, or dollar sign characters, and cannot start with a number.`
+        )
+    }
+}
+
+export class InvalidKeyedArgumentError extends KeyedPathError {
+    constructor(message: string) {
+        super(message)
+    }
+}
 
 /**
  * Parses a path string into an array of property tokens. Handles both dot notation
@@ -13,7 +54,12 @@ const tokenCache = new Map<string, string[]>()
  * @param {string} key - The path string to parse (e.g., 'users[0].profile.name')
  * @param {boolean} [shouldCache=true] - Enable/disable caching of parsed results
  * @returns {string[]} Array of path segments
- * @throws {Error} If the path string is empty or invalid
+ * @throws {EmptyPathError} If the path string is empty
+ * @throws {InvalidPathFormatError} If the path string:
+ *   - Contains consecutive dots (e.g., 'a..b')
+ *   - Is just '.' or '..'
+ *   - Contains non-numeric values in brackets (e.g., '[a]')
+ *   - Contains empty segments
  *
  * @example
  * // Dot notation
@@ -24,15 +70,45 @@ const tokenCache = new Map<string, string[]>()
  *
  * // Mixed notation
  * getTokens('items[0].tags.primary') // → ['items', '0', 'tags', 'primary']
+ *
+ * // Invalid paths will throw
+ * getTokens('') // → throws EmptyPathError
+ * getTokens('user..name') // → throws InvalidPathFormatError
+ * getTokens('[a]') // → throws InvalidPathFormatError
  */
 export const getTokens = (key: string, shouldCache = true): string[] => {
     if (!key) {
-        throw new Error('Path string cannot be empty')
+        throw new EmptyPathError()
     }
 
-    // Check cache first if caching is enabled
-    if (shouldCache && tokenCache.has(key)) {
-        return tokenCache.get(key)!
+    // Check for invalid path patterns
+    if (key === '.' || key === '..') {
+        throw new InvalidPathFormatError('Cannot use . or .. as path')
+    }
+    if (/\.\./.test(key)) {
+        throw new InvalidPathFormatError('Cannot have consecutive dots in path')
+    }
+    if (/\[[^\d\]]/g.test(key)) {
+        throw new InvalidPathFormatError('Array indices must be numeric')
+    }
+
+    if (shouldCache) {
+        const entry = tokenCache.get(key)
+        const now = Date.now()
+
+        // Clean expired entries
+        if (tokenCache.size > MAX_CACHE_SIZE / 2) {
+            for (const [k, v] of tokenCache.entries()) {
+                if (now - v.lastAccessed > CACHE_TTL) {
+                    tokenCache.delete(k)
+                }
+            }
+        }
+
+        if (entry) {
+            entry.lastAccessed = now
+            return entry.tokens
+        }
     }
 
     // Convert array notation [0] to dot notation .0
@@ -46,9 +122,14 @@ export const getTokens = (key: string, shouldCache = true): string[] => {
     // Split the path into tokens
     const tokens = keyWithoutBracket.split('.')
 
+    // Validate that we don't have empty tokens
+    if (tokens.some((token) => token === '')) {
+        throw new InvalidPathFormatError('Path contains empty segments')
+    }
+
     // Cache the result if caching is enabled
     if (shouldCache) {
-        tokenCache.set(key, tokens)
+        tokenCache.set(key, { tokens, lastAccessed: Date.now() })
     }
     return tokens
 }
@@ -64,7 +145,9 @@ export const getTokens = (key: string, shouldCache = true): string[] => {
  *   - The path doesn't exist
  *   - A null/undefined value is encountered while traversing
  *   - The root is not an object/array
- * @throws {Error} If any path segment contains invalid characters (only allows alphanumeric, _, $, and digits)
+ * @throws {InvalidPropertyKeyError} If any path segment contains invalid characters
+ *   (only allows alphanumeric, underscore, dollar sign, and must not start with a number
+ *   unless it's a pure numeric index)
  *
  * @example
  * // Object traversal
@@ -77,18 +160,29 @@ export const getTokens = (key: string, shouldCache = true): string[] => {
  * getNested({}, ['missing', 'path']) // → undefined
  * getNested(null, ['any', 'path']) // → undefined
  * getNested({a: null}, ['a', 'b']) // → undefined
+ *
+ * // Error cases
+ * getNested({}, ['invalid-key']) // → throws InvalidPropertyKeyError
+ * getNested({}, ['123abc']) // → throws InvalidPropertyKeyError
  */
-const getNested = (root: unknown, keyTokens: string[]): unknown => {
-    // Safety check: ensure root is an object or array
-    if (typeof root !== 'object' || root === null) {
-        return undefined
-    }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getNested = (root: any, keyTokens: string[]): any => {
+    // Handle null/undefined values directly
+    if (root == null) return undefined
 
-    let current: unknown = root
+    // WeakRef is only useful for object references
+    const ref = typeof root === 'object' ? new WeakRef(root) : null
+    const obj = ref?.deref() ?? root
+
+    // Use TypedArrays for numeric indices for faster array access
+    const numericIndices = new Int32Array(keyTokens.filter((k) => !isNaN(parseInt(k))).map(Number))
+    const isNumericKey = new Set(numericIndices)
+
+    let current: any = obj // eslint-disable-line @typescript-eslint/no-explicit-any
     for (const key of keyTokens) {
         // Security: Validate key format to prevent injection attacks
         if (!/^(?:\d+|[a-zA-Z_$][a-zA-Z0-9_$]*)$/.test(key)) {
-            throw new Error(`Invalid property key format: "${key}"`)
+            throw new InvalidPropertyKeyError(key)
         }
 
         // Return undefined if we hit a null/undefined value before reaching the end
@@ -96,8 +190,12 @@ const getNested = (root: unknown, keyTokens: string[]): unknown => {
             return undefined
         }
 
-        // Type assertion since we know current is an object at this point
-        current = (current as Record<string, unknown>)[key]
+        // Optimize array access by using numeric indices when possible
+        if (isNumericKey.has(parseInt(key))) {
+            current = Array.isArray(current) ? current[parseInt(key)] : undefined
+        } else {
+            current = (current as Record<string, unknown>)[key]
+        }
     }
     return current
 }
@@ -199,8 +297,23 @@ export function keyed<Parent extends object, Path extends string>(
     const keyTokens = getTokens(path)
 
     // Prevent prototype pollution attacks by blocking access to dangerous properties
-    const FORBIDDEN_TOKENS = ['__proto__', 'constructor', 'prototype']
-    const forbiddenToken = keyTokens.find((token) => FORBIDDEN_TOKENS.includes(token))
+    const FORBIDDEN_PATTERNS = [
+        /__proto__/i,
+        /constructor/i,
+        /prototype/i,
+        /[<>]/, // XSS prevention
+        /\$where/i, // NoSQL injection prevention
+        /\b(and|or|not)\b/i // SQL injection prevention
+    ]
+
+    const validateToken = (token: string): boolean => {
+        return (
+            !FORBIDDEN_PATTERNS.some((pattern) => pattern.test(token)) &&
+            /^[a-zA-Z0-9_$][\w$]*$/.test(token)
+        )
+    }
+
+    const forbiddenToken = keyTokens.find((token) => !validateToken(token))
     if (forbiddenToken) {
         throw new Error(`Key contains forbidden property name "${forbiddenToken}"`)
     }
