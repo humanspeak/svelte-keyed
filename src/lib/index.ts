@@ -103,21 +103,39 @@ const getNested = (root: unknown, keyTokens: string[]): unknown => {
 }
 
 /**
- * Creates a shallow clone of an object while preserving its prototype chain.
+ * Creates a shallow clone of an object or array while preserving the prototype chain.
+ * This is crucial for maintaining class instances and their methods during state updates.
  *
- * @template T
- * @param {T} source - The object to clone
- * @returns {T} A new object with the same properties and prototype
+ * @template T - Type of the source object
+ * @param {T} source - The object or array to clone
+ * @returns {T} A shallow clone with the same prototype chain
  *
  * @example
- * const obj = new CustomClass();
- * const clone = clonedWithPrototype(obj); // Clone maintains CustomClass prototype
+ * // Cloning arrays
+ * const arr = [1, 2, 3];
+ * const clonedArr = clonedWithPrototype(arr); // → [1, 2, 3]
+ *
+ * // Preserving class instances
+ * class User {
+ *   constructor(public name: string) {}
+ *   greet() { return `Hello, ${this.name}!`; }
+ * }
+ * const user = new User('John');
+ * const clonedUser = clonedWithPrototype(user);
+ * clonedUser.greet(); // → "Hello, John!"
+ *
+ * @throws {TypeError} If source is not an object or array
  */
 const clonedWithPrototype = <T extends object>(source: T): T => {
+    if (source === null || typeof source !== 'object') {
+        throw new TypeError('Source must be an object or array')
+    }
+
     // Handle arrays specially to maintain their type
     if (Array.isArray(source)) {
         return [...source] as T
     }
+
     // Create new object with same prototype and copy properties
     return Object.assign(Object.create(Object.getPrototypeOf(source)), source)
 }
