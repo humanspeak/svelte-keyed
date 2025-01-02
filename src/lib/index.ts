@@ -54,38 +54,50 @@ export const getTokens = (key: string, shouldCache = true): string[] => {
 }
 
 /**
- * Retrieves a nested value from an object using a path array.
+ * Safely retrieves a nested value from an object using a path array.
+ * Handles traversing through objects and arrays while protecting against
+ * invalid property access.
  *
- * @param {unknown} root - The root object to traverse
- * @param {string[]} keyTokens - Array of property names forming the path
- * @returns {any} The value at the specified path or undefined if not found
- * @throws {Error} If a property key contains invalid characters
+ * @param {unknown} root - The root object/array to traverse
+ * @param {string[]} keyTokens - Array of property names or array indices
+ * @returns {unknown} The value at the specified path, or undefined if:
+ *   - The path doesn't exist
+ *   - A null/undefined value is encountered while traversing
+ *   - The root is not an object/array
+ * @throws {Error} If any path segment contains invalid characters (only allows alphanumeric, _, $, and digits)
  *
  * @example
- * getNested({user: {name: 'John'}}, ['user', 'name']) // Returns 'John'
- * getNested({items: [{id: 1}]}, ['items', '0', 'id']) // Returns 1
+ * // Object traversal
+ * getNested({user: {name: 'John'}}, ['user', 'name']) // → 'John'
+ *
+ * // Array traversal
+ * getNested({posts: [{id: 1}]}, ['posts', '0', 'id']) // → 1
+ *
+ * // Undefined cases
+ * getNested({}, ['missing', 'path']) // → undefined
+ * getNested(null, ['any', 'path']) // → undefined
+ * getNested({a: null}, ['a', 'b']) // → undefined
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getNested = (root: unknown, keyTokens: string[]): any => {
-    // Safety check: ensure root is an object
+const getNested = (root: unknown, keyTokens: string[]): unknown => {
+    // Safety check: ensure root is an object or array
     if (typeof root !== 'object' || root === null) {
         return undefined
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let current: any = root
+    let current: unknown = root
     for (const key of keyTokens) {
         // Security: Validate key format to prevent injection attacks
-        // Only allows: numbers, letters, underscore, and dollar sign
         if (!/^(?:\d+|[a-zA-Z_$][a-zA-Z0-9_$]*)$/.test(key)) {
-            throw new Error('Invalid property key format')
+            throw new Error(`Invalid property key format: "${key}"`)
         }
 
         // Return undefined if we hit a null/undefined value before reaching the end
         if (current == null) {
             return undefined
         }
-        current = current[key]
+
+        // Type assertion since we know current is an object at this point
+        current = (current as Record<string, unknown>)[key]
     }
     return current
 }
