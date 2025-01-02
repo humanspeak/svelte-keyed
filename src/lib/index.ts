@@ -7,14 +7,15 @@ import type { Get } from 'type-fest'
 const tokenCache = new Map<string, string[]>()
 
 /**
- * Converts a string path into an array of property tokens
- * Examples:
- * - "users.name" becomes ["users", "name"]
- * - "users[0].profile" becomes ["users", "0", "profile"]
+ * Parses a string path into an array of property tokens.
  *
- * @param key - The path string to parse (e.g., "user.profile.name")
- * @param shouldCache - Whether to cache the result for performance (default: true)
- * @returns Array of path segments
+ * @param {string} key - The path string to parse
+ * @param {boolean} [shouldCache=true] - Whether to cache the parsed result
+ * @returns {string[]} Array of path segments
+ *
+ * @example
+ * getTokens('users.0.name') // Returns ['users', '0', 'name']
+ * getTokens('items[0].id') // Returns ['items', '0', 'id']
  */
 export const getTokens = (key: string, shouldCache = true): string[] => {
     // Check cache first if caching is enabled
@@ -43,14 +44,16 @@ export const getTokens = (key: string, shouldCache = true): string[] => {
 }
 
 /**
- * Safely retrieves a nested value from an object using an array of property names
- * Examples:
- * - getNested({user: {name: 'John'}}, ['user', 'name']) returns 'John'
- * - getNested({items: [{id: 1}]}, ['items', '0', 'id']) returns 1
+ * Retrieves a nested value from an object using a path array.
  *
- * @param root - The root object to traverse
- * @param keyTokens - Array of property names forming the path
- * @returns The value at the specified path or undefined if not found
+ * @param {unknown} root - The root object to traverse
+ * @param {string[]} keyTokens - Array of property names forming the path
+ * @returns {any} The value at the specified path or undefined if not found
+ * @throws {Error} If a property key contains invalid characters
+ *
+ * @example
+ * getNested({user: {name: 'John'}}, ['user', 'name']) // Returns 'John'
+ * getNested({items: [{id: 1}]}, ['items', '0', 'id']) // Returns 1
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getNested = (root: unknown, keyTokens: string[]): any => {
@@ -78,11 +81,15 @@ const getNested = (root: unknown, keyTokens: string[]): any => {
 }
 
 /**
- * Creates a shallow clone of an object while preserving its prototype chain
- * Important for maintaining class instances and their methods
+ * Creates a shallow clone of an object while preserving its prototype chain.
  *
- * @param source - The object to clone
- * @returns A new object with the same properties and prototype
+ * @template T
+ * @param {T} source - The object to clone
+ * @returns {T} A new object with the same properties and prototype
+ *
+ * @example
+ * const obj = new CustomClass();
+ * const clone = clonedWithPrototype(obj); // Clone maintains CustomClass prototype
  */
 const clonedWithPrototype = <T extends object>(source: T): T => {
     // Handle arrays specially to maintain their type
@@ -96,8 +103,13 @@ const clonedWithPrototype = <T extends object>(source: T): T => {
 // TypeScript function overloads for better type safety:
 
 /**
- * Creates a derived store for a nested value in a parent store
- * Version 1: For non-nullable parent stores
+ * Creates a derived store for accessing and modifying nested values in a non-nullable parent store.
+ *
+ * @template Parent
+ * @template Path
+ * @param {Writable<Parent>} parent - The parent store containing the nested value
+ * @param {Path | KeyPath<Parent>} path - The path to the nested value
+ * @returns {Writable<Get<Parent, Path>>} A writable store for the nested value
  */
 export function keyed<Parent extends object, Path extends string>(
     parent: Writable<Parent>, // eslint-disable-line no-unused-vars
@@ -105,8 +117,13 @@ export function keyed<Parent extends object, Path extends string>(
 ): Writable<Get<Parent, Path>>
 
 /**
- * Creates a derived store for a nested value in a parent store
- * Version 2: For nullable parent stores
+ * Creates a derived store for accessing and modifying nested values in a nullable parent store.
+ *
+ * @template Parent
+ * @template Path
+ * @param {Writable<Parent | undefined | null>} parent - The nullable parent store
+ * @param {Path | KeyPath<Parent>} path - The path to the nested value
+ * @returns {Writable<Get<Parent, Path> | undefined>} A writable store for the nested value
  */
 export function keyed<Parent extends object, Path extends string>(
     parent: Writable<Parent | undefined | null>, // eslint-disable-line no-unused-vars
@@ -114,12 +131,25 @@ export function keyed<Parent extends object, Path extends string>(
 ): Writable<Get<Parent, Path> | undefined>
 
 /**
- * Main implementation of the keyed function
- * Creates a derived store that tracks and allows modification of a nested value
+ * Creates a derived store for accessing and modifying nested values in a parent store.
  *
- * @param parent - The parent store containing the nested value
- * @param path - The path to the nested value (e.g., "user.profile.name")
- * @returns A writable store for the nested value
+ * @template Parent
+ * @template Path
+ * @param {Writable<Parent | undefined | null>} parent - The parent store containing the nested value
+ * @param {Path | KeyPath<Parent>} path - The path to the nested value
+ * @returns {Writable<Get<Parent, Path> | undefined>} A writable store for the nested value
+ *
+ * @example
+ * const store = writable({ user: { profile: { name: 'John' } } });
+ * const nameStore = keyed(store, 'user.profile.name');
+ *
+ * // Read value
+ * nameStore.subscribe(name => console.log(name)); // Logs: 'John'
+ *
+ * // Update value
+ * nameStore.set('Jane'); // Updates to { user: { profile: { name: 'Jane' } } }
+ *
+ * @throws {Error} If the path contains forbidden property names
  */
 export function keyed<Parent extends object, Path extends string>(
     parent: Writable<Parent | undefined | null>,

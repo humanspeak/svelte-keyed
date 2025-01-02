@@ -1,13 +1,16 @@
-![svelte-keyed-banner](https://user-images.githubusercontent.com/42545742/145455110-0d90603a-5fb3-453a-a9ea-7c4e3b443913.png)
-
 # svelte-keyed
 
-[![npm version](http://img.shields.io/npm/v/svelte-keyed.svg)](https://www.npmjs.com/package/svelte-keyed)
-[![npm downloads](https://img.shields.io/npm/dm/svelte-keyed.svg)](https://www.npmjs.com/package/svelte-keyed)
-![license](https://img.shields.io/npm/l/svelte-keyed)
-![build](https://img.shields.io/github/actions/workflow/status/bryanmylee/svelte-keyed/publish.yml)
-[![coverage](https://coveralls.io/repos/github/bryanmylee/svelte-keyed/badge.svg?branch=main)](https://coveralls.io/github/bryanmylee/svelte-keyed?branch=main)
-[![size](https://img.shields.io/bundlephobia/min/svelte-keyed)](https://bundlephobia.com/result?p=svelte-keyed)
+[![NPM version](https://img.shields.io/npm/v/@humanspeak/svelte-markdown.svg)](https://www.npmjs.com/package/@humanspeak/svelte-markdown)
+[![Build Status](https://github.com/humanspeak/svelte-markdown/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/humanspeak/svelte-markdown/actions/workflows/npm-publish.yml)
+<!-- [![Coverage Status](https://coveralls.io/repos/github/humanspeak/svelte-markdown/badge.svg?branch=main)](https://coveralls.io/github/humanspeak/svelte-markdown?branch=main) -->
+[![License](https://img.shields.io/npm/l/@humanspeak/svelte-markdown.svg)](https://github.com/humanspeak/svelte-markdown/blob/main/LICENSE)
+<!-- [![Bundle Size](https://img.shields.io/bundlephobia/minzip/@humanspeak/svelte-markdown)](https://bundlephobia.com/package/@humanspeak/svelte-markdown) -->
+[![Downloads](https://img.shields.io/npm/dm/@humanspeak/svelte-markdown.svg)](https://www.npmjs.com/package/@humanspeak/svelte-markdown)
+[![CodeQL](https://github.com/humanspeak/svelte-markdown/actions/workflows/codeql.yml/badge.svg)](https://github.com/humanspeak/svelte-markdown/actions/workflows/codeql.yml)
+<!-- [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md) -->
+[![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
+[![Types](https://img.shields.io/npm/types/@humanspeak/svelte-markdown.svg)](https://www.npmjs.com/package/@humanspeak/svelte-markdown)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/humanspeak/svelte-markdown/graphs/commit-activity)
 
 A **writable** derived store for objects and arrays!
 
@@ -23,7 +26,7 @@ console.log($user) // { name: { first: 'Bryan', last: 'Harris' } };
 ## Installation
 
 ```bash
-$ npm i -D svelte-keyed
+npm i -D @humanspeak/svelte-keyed
 ```
 
 Since Svelte automatically bundles all required dependencies, you only need to install this package as a dev dependency with the `-D` flag.
