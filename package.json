@@ -1,6 +1,6 @@
 {
     "name": "@humanspeak/svelte-keyed",
-    "version": "3.0.1",
+    "version": "3.1.0",
     "scripts": {
         "dev": "vite dev",
         "build": "vite build && npm run package",
