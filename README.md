@@ -12,7 +12,7 @@
 [![Types](https://img.shields.io/npm/types/@humanspeak/svelte-keyed.svg)](https://www.npmjs.com/package/@humanspeak/svelte-keyed)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/humanspeak/svelte-keyed/graphs/commit-activity)
 
-A **writable** derived store for objects and arrays!
+A **writable** derived store for objects and arrays with TypeScript support!
 
 ```js
 const user = writable({ name: { first: 'Rich', last: 'Harris' } })
@@ -33,17 +33,18 @@ Since Svelte automatically bundles all required dependencies, you only need to i
 
 ## API
 
-`keyed` takes a writable object store and a **keypath**, and returns a writable store whose _changes are reflected on the original store_.
+`keyed` takes a writable store and a **keypath**, and returns a writable store whose _changes are reflected on the original store_. The keypath can target nested properties in objects or elements in arrays.
 
-Properties are accessed with dot notation, and arrays can be indexed with bracket notation.
+Properties are accessed with dot notation, and arrays can be indexed with bracket notation:
 
 ```js
 const email = keyed(settings, 'profiles[0].email')
+const firstItem = keyed(list, '[0]')
 ```
 
 ### Nullable parents
 
-If the parent store is nullable, then the child store will also be nullable.
+If the parent store is nullable, then the child store will also be nullable:
 
 ```ts
 type User = {
@@ -63,7 +64,7 @@ const firstName = keyed(maybeUser, 'name.first')
 
 ### Nullable properties
 
-Nullable properties are accessed with [optional chaining](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining) behaviour.
+Properties are accessed with [optional chaining](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining) behavior:
 
 ```ts
 const user = writable(initUser)
@@ -71,9 +72,19 @@ const user = writable(initUser)
 const partnerName = keyed(user, 'relations.partner.name')
 ```
 
+### Array Operations
+
+The store supports array operations through bracket notation:
+
+```ts
+const list = writable(['a', 'b', 'c'])
+const firstItem = keyed(list, '[0]')
+const lastItem = keyed(list, '[-1]') // Access last element
+```
+
 ### TypeScript
 
-`keyed` infers the return type of the keyed store from the keypath.
+`keyed` provides full TypeScript support with type inference from the keypath:
 
 ```ts
 const user = writable(initUser)
@@ -81,7 +92,7 @@ const user = writable(initUser)
 const firstName = keyed(user, 'name.first')
 ```
 
-`keyed` will also try to guess all possible keypaths up to a depth limit of 3.
+Type hints are provided for keypaths up to a depth of 3:
 
 ```ts
 keyed(user, '...');
@@ -95,29 +106,13 @@ keyed(user, '...');
             └───────────────────────────────┘
 ```
 
-_This limit is due to a TypeScript limitation where structured types must be generated statically. Increasing the depth limit slows down type compilation._
+_Note: The depth limit is due to TypeScript's requirement that structured types be generated statically. While deeper paths will work, they won't show in autocomplete._
 
-Type hints will not be provided for keypaths with a depth greater than 3 but this does not affect the return type.
+## Use Cases
 
-```ts
-const user = writable(user)
-// Writable<string | undefined>
-const firstName = keyed(user, 'relations.partner.name.first')
-```
+### Context Stores
 
-## Motivations
-
-We usually read and write properties of an object store with [auto-subscriptions](https://svelte.dev/tutorial/auto-subscriptions).
-
-```svelte
-<input bind:value={$name.first} />
-```
-
-However, auto-subscriptions are isolated to a Svelte component. `svelte-keyed` aims to solve several common limitations listed below.
-
-### Context stores
-
-Often, we want to set a property or element of a store into component context, then allow child components to read / write to the property.
+Perfect for setting store properties in component context:
 
 ```svelte
 <!-- Settings.svelte -->
@@ -129,18 +124,9 @@ Often, we want to set a property or element of a store into component context, t
 <ProfileSettings />
 ```
 
-```svelte
-<!-- ProfileSettings.svelte -->
-<script>
-    const profileSettings = getContext('profileSettings')
-</script>
+### Action Parameters
 
-<input type="text" bind:value={$profileSettings.username} />
-```
-
-### Helper functions
-
-One important method to reduce clutter on your component is to extract functionality into external helper functions. `svelte-keyed` allows you to create derived `Writable` stores that can be passed into or returned from helper functions.
+Ideal for passing store segments to Svelte actions:
 
 ```svelte
 <!-- Settings.svelte -->
@@ -150,19 +136,14 @@ One important method to reduce clutter on your component is to extract functiona
 </script>
 
 <div use:trackClicks={clicks} />
-<input use:trackClicks={clicks} />
 ```
 
-```js
-export const trackClicks = (node, clicks) => {
-    const listen = () => {
-        clicks.update(($clicks) => $clicks + 1)
-    }
-    node.addEventListener('click', listen)
-    return {
-        destroy() {
-            node.removeEventListener('click', listen)
-        }
-    }
-}
+### Store Composition
+
+Combine with other store operations for complex state management:
+
+```ts
+const settings = writable({ theme: 'light', fontSize: 16 })
+const theme = keyed(settings, 'theme')
+const isDarkMode = derived(theme, $theme => $theme === 'dark')
 ```
