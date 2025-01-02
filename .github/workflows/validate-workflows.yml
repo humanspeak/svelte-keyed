@@ -1,0 +1,63 @@
+name: Validate Workflows
+
+on:
+    pull_request:
+        paths:
+            - '.github/workflows/**'
+
+jobs:
+    validate:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  persist-credentials: false
+
+            - name: Install Rust
+              uses: dtolnay/rust-toolchain@stable
+              with:
+                  toolchain: stable
+
+            - name: Cache cargo registry
+              uses: actions/cache@v3
+              with:
+                  path: |
+                      ~/.cargo/registry
+                      ~/.cargo/git
+                  key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+                  restore-keys: |
+                      ${{ runner.os }}-cargo-registry-
+
+            - name: Install zizmor
+              run: cargo install --force zizmor
+
+            - name: Validate all workflows
+              working-directory: .github/workflows
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  # Initialize error flag
+                  has_errors=0
+
+                  # Safely quote the base ref
+                  base_ref="${{ github.base_ref }}"
+
+                  # Get list of changed files in .github/workflows with proper quoting
+                  changed_files=$(git diff --name-only "origin/${base_ref}" | grep -E '^\.github/workflows/[^/]+\.yml$' || true)
+
+                  # Loop through changed workflow files
+                  while IFS= read -r file; do
+                    [ -z "$file" ] && continue
+                    filename=$(basename -- "$file")
+                    echo "Validating $filename..."
+                    if ! zizmor "$filename"; then
+                      echo "::error::Validation failed for $filename"
+                      has_errors=1
+                    fi
+                  done <<< "$changed_files"
+
+                  # Exit with error if any validation failed
+                  if [ $has_errors -eq 1 ]; then
+                    exit 1
+                  fi

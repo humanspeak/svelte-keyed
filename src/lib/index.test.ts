@@ -49,6 +49,13 @@ describe('get tokens', () => {
         const result = getTokens('a[3].b.c[4][5]')
         expect(result).toStrictEqual(['a', '3', 'b', 'c', '4', '5'])
     })
+
+    it('throws error for invalid path formats', () => {
+        expect(() => getTokens('.')).toThrow()
+        expect(() => getTokens('..')).toThrow()
+        expect(() => getTokens('a..b')).toThrow()
+        expect(() => getTokens('[a]')).toThrow()
+    })
 })
 
 describe('shallow keyed object test', () => {
@@ -239,6 +246,13 @@ describe('shallow keyed array test', () => {
             expect(get(parent)).toBeNull()
         })
     })
+
+    it('returns undefined for out of bounds array access', () => {
+        const actions = ['eat', 'sleep']
+        const parent = writable(actions)
+        const action = keyed(parent, '[5]')
+        expect(get(action)).toBeUndefined()
+    })
 })
 
 describe('nested keyed object test', () => {
@@ -346,5 +360,28 @@ describe('keyed classes', () => {
         firstName.set('jane')
         age.set(11)
         expect(get(parent).name).toBeInstanceOf(NameC)
+    })
+})
+
+describe('edge cases', () => {
+    it('handles circular references gracefully', () => {
+        const circular: any = { name: 'test' }
+        circular.self = circular
+        const parent = writable(circular)
+        const self = keyed(parent, 'self.self.name')
+        expect(get(self)).toBe('test')
+    })
+
+    it('handles deeply nested undefined values correctly', () => {
+        const user = {
+            name: {
+                first: undefined,
+                last: 'smith'
+            },
+            age: 10
+        }
+        const parent = writable(user)
+        const firstName = keyed(parent, 'name.first')
+        expect(get(firstName)).toBeUndefined()
     })
 })
