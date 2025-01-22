@@ -1,24 +1,15 @@
-# svelte-keyed
+![svelte-keyed-banner](https://user-images.githubusercontent.com/42545742/145455110-0d90603a-5fb3-453a-a9ea-7c4e3b443913.png)
 
-[![NPM version](https://img.shields.io/npm/v/@humanspeak/svelte-keyed.svg)](https://www.npmjs.com/package/@humanspeak/svelte-keyed)
-[![Build Status](https://github.com/humanspeak/svelte-keyed/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/humanspeak/svelte-keyed/actions/workflows/npm-publish.yml)
+# @humanspeak/svelte-keyed
 
-<!-- [![Coverage Status](https://coveralls.io/repos/github/humanspeak/svelte-keyed/badge.svg?branch=main)](https://coveralls.io/github/humanspeak/svelte-keyed?branch=main) -->
+[![npm version](http://img.shields.io/npm/v/svelte-keyed.svg)](https://www.npmjs.com/package/humanspeak/svelte-keyed)
+[![npm downloads](https://img.shields.io/npm/dm/svelte-keyed.svg)](https://www.npmjs.com/package/humanspeak/svelte-keyed)
+![license](https://img.shields.io/npm/l/@humanspeak/svelte-keyed)
+![build](https://img.shields.io/github/actions/workflow/status/humanspeak/svelte-keyed/publish.yml)
+[![coverage](https://coveralls.io/repos/github/humanspeak/svelte-keyed/badge.svg?branch=main)](https://coveralls.io/github/humanspeak/svelte-keyed?branch=main)
+[![size](https://img.shields.io/bundlephobia/min/@humanspeak/svelte-keyed)](https://bundlephobia.com/result?p=@humanspeak/svelte-keyed)
 
-[![License](https://img.shields.io/npm/l/@humanspeak/svelte-keyed.svg)](https://github.com/humanspeak/svelte-keyed/blob/main/LICENSE)
-
-<!-- [![Bundle Size](https://img.shields.io/bundlephobia/minzip/@humanspeak/svelte-keyed)](https://bundlephobia.com/package/@humanspeak/svelte-keyed) -->
-
-[![Downloads](https://img.shields.io/npm/dm/@humanspeak/svelte-keyed.svg)](https://www.npmjs.com/package/@humanspeak/svelte-keyed)
-[![CodeQL](https://github.com/humanspeak/svelte-keyed/actions/workflows/codeql.yml/badge.svg)](https://github.com/humanspeak/svelte-keyed/actions/workflows/codeql.yml)
-
-<!-- [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md) -->
-
-[![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
-[![Types](https://img.shields.io/npm/types/@humanspeak/svelte-keyed.svg)](https://www.npmjs.com/package/@humanspeak/svelte-keyed)
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/humanspeak/svelte-keyed/graphs/commit-activity)
-
-A **writable** derived store for objects and arrays with TypeScript support!
+A **writable** derived store for objects and arrays!
 
 ```js
 const user = writable({ name: { first: 'Rich', last: 'Harris' } })
@@ -32,25 +23,24 @@ console.log($user) // { name: { first: 'Bryan', last: 'Harris' } };
 ## Installation
 
 ```bash
-npm i -D @humanspeak/svelte-keyed
+$ npm i -D svelte-keyed
 ```
 
 Since Svelte automatically bundles all required dependencies, you only need to install this package as a dev dependency with the `-D` flag.
 
 ## API
 
-`keyed` takes a writable store and a **keypath**, and returns a writable store whose _changes are reflected on the original store_. The keypath can target nested properties in objects or elements in arrays.
+`keyed` takes a writable object store and a **keypath**, and returns a writable store whose _changes are reflected on the original store_.
 
-Properties are accessed with dot notation, and arrays can be indexed with bracket notation:
+Properties are accessed with dot notation, and arrays can be indexed with bracket notation.
 
 ```js
 const email = keyed(settings, 'profiles[0].email')
-const firstItem = keyed(list, '[0]')
 ```
 
 ### Nullable parents
 
-If the parent store is nullable, then the child store will also be nullable:
+If the parent store is nullable, then the child store will also be nullable.
 
 ```ts
 type User = {
@@ -70,7 +60,7 @@ const firstName = keyed(maybeUser, 'name.first')
 
 ### Nullable properties
 
-Properties are accessed with [optional chaining](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining) behavior:
+Nullable properties are accessed with [optional chaining](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining) behaviour.
 
 ```ts
 const user = writable(initUser)
@@ -78,19 +68,9 @@ const user = writable(initUser)
 const partnerName = keyed(user, 'relations.partner.name')
 ```
 
-### Array Operations
-
-The store supports array operations through bracket notation:
-
-```ts
-const list = writable(['a', 'b', 'c'])
-const firstItem = keyed(list, '[0]')
-const lastItem = keyed(list, '[-1]') // Access last element
-```
-
 ### TypeScript
 
-`keyed` provides full TypeScript support with type inference from the keypath:
+`keyed` infers the return type of the keyed store from the keypath.
 
 ```ts
 const user = writable(initUser)
@@ -98,7 +78,7 @@ const user = writable(initUser)
 const firstName = keyed(user, 'name.first')
 ```
 
-Type hints are provided for keypaths up to a depth of 3:
+`keyed` will also try to guess all possible keypaths up to a depth limit of 3.
 
 ```ts
 keyed(user, '...');
@@ -112,13 +92,29 @@ keyed(user, '...');
             └───────────────────────────────┘
 ```
 
-_Note: The depth limit is due to TypeScript's requirement that structured types be generated statically. While deeper paths will work, they won't show in autocomplete._
+_This limit is due to a TypeScript limitation where structured types must be generated statically. Increasing the depth limit slows down type compilation._
 
-## Use Cases
+Type hints will not be provided for keypaths with a depth greater than 3 but this does not affect the return type.
 
-### Context Stores
+```ts
+const user = writable(user)
+// Writable<string | undefined>
+const firstName = keyed(user, 'relations.partner.name.first')
+```
 
-Perfect for setting store properties in component context:
+## Motivations
+
+We usually read and write properties of an object store with [auto-subscriptions](https://svelte.dev/tutorial/auto-subscriptions).
+
+```svelte
+<input bind:value={$name.first} />
+```
+
+However, auto-subscriptions are isolated to a Svelte component. `svelte-keyed` aims to solve several common limitations listed below.
+
+### Context stores
+
+Often, we want to set a property or element of a store into component context, then allow child components to read / write to the property.
 
 ```svelte
 <!-- Settings.svelte -->
@@ -130,9 +126,18 @@ Perfect for setting store properties in component context:
 <ProfileSettings />
 ```
 
-### Action Parameters
+```svelte
+<!-- ProfileSettings.svelte -->
+<script>
+    const profileSettings = getContext('profileSettings')
+</script>
 
-Ideal for passing store segments to Svelte actions:
+<input type="text" bind:value={$profileSettings.username} />
+```
+
+### Helper functions
+
+One important method to reduce clutter on your component is to extract functionality into external helper functions. `svelte-keyed` allows you to create derived `Writable` stores that can be passed into or returned from helper functions.
 
 ```svelte
 <!-- Settings.svelte -->
@@ -142,14 +147,19 @@ Ideal for passing store segments to Svelte actions:
 </script>
 
 <div use:trackClicks={clicks} />
+<input use:trackClicks={clicks} />
 ```
 
-### Store Composition
-
-Combine with other store operations for complex state management:
-
-```ts
-const settings = writable({ theme: 'light', fontSize: 16 })
-const theme = keyed(settings, 'theme')
-const isDarkMode = derived(theme, ($theme) => $theme === 'dark')
+```js
+export const trackClicks = (node, clicks) => {
+    const listen = () => {
+        clicks.update(($clicks) => $clicks + 1)
+    }
+    node.addEventListener('click', listen)
+    return {
+        destroy() {
+            node.removeEventListener('click', listen)
+        }
+    }
+}
 ```
