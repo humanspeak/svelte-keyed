@@ -7,8 +7,8 @@ export default defineConfig({
         include: ['src/**/*.test.ts'],
         globals: true,
         coverage: {
-            reporter: 'lcov',
-            include: ['**/*.ts']
-        }
+            reporter: 'lcov'
+        },
+        reporters: ['verbose', ['junit', { outputFile: './junit-vitest.xml' }]]
     }
 })
