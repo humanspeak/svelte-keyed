@@ -2,12 +2,18 @@
 
 [![NPM version](https://img.shields.io/npm/v/@humanspeak/svelte-keyed.svg)](https://www.npmjs.com/package/@humanspeak/svelte-keyed)
 [![Build Status](https://github.com/humanspeak/svelte-keyed/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/humanspeak/svelte-keyed/actions/workflows/npm-publish.yml)
+
 <!-- [![Coverage Status](https://coveralls.io/repos/github/humanspeak/svelte-keyed/badge.svg?branch=main)](https://coveralls.io/github/humanspeak/svelte-keyed?branch=main) -->
+
 [![License](https://img.shields.io/npm/l/@humanspeak/svelte-keyed.svg)](https://github.com/humanspeak/svelte-keyed/blob/main/LICENSE)
+
 <!-- [![Bundle Size](https://img.shields.io/bundlephobia/minzip/@humanspeak/svelte-keyed)](https://bundlephobia.com/package/@humanspeak/svelte-keyed) -->
+
 [![Downloads](https://img.shields.io/npm/dm/@humanspeak/svelte-keyed.svg)](https://www.npmjs.com/package/@humanspeak/svelte-keyed)
 [![CodeQL](https://github.com/humanspeak/svelte-keyed/actions/workflows/codeql.yml/badge.svg)](https://github.com/humanspeak/svelte-keyed/actions/workflows/codeql.yml)
+
 <!-- [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md) -->
+
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
 [![Types](https://img.shields.io/npm/types/@humanspeak/svelte-keyed.svg)](https://www.npmjs.com/package/@humanspeak/svelte-keyed)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/humanspeak/svelte-keyed/graphs/commit-activity)
@@ -145,5 +151,5 @@ Combine with other store operations for complex state management:
 ```ts
 const settings = writable({ theme: 'light', fontSize: 16 })
 const theme = keyed(settings, 'theme')
-const isDarkMode = derived(theme, $theme => $theme === 'dark')
+const isDarkMode = derived(theme, ($theme) => $theme === 'dark')
 ```
