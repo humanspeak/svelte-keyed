@@ -2,6 +2,8 @@
 
 ![svelte-keyed-banner](https://user-images.githubusercontent.com/42545742/145455110-0d90603a-5fb3-453a-a9ea-7c4e3b443913.png)
 
+> A powerful TypeScript-first derived store for Svelte 5 that enables deep object and array manipulation with full reactivity.
+
 [![npm version](http://img.shields.io/npm/v/@humanspeak/svelte-keyed.svg)](https://www.npmjs.com/package/humanspeak/svelte-keyed)
 ![build](https://img.shields.io/github/actions/workflow/status/humanspeak/svelte-keyed/npm-publish.yml)
 [![coverage](https://coveralls.io/repos/github/humanspeak/svelte-keyed/badge.svg?branch=main)](https://coveralls.io/github/humanspeak/svelte-keyed?branch=main)
@@ -11,7 +13,16 @@
 [![Install size](https://packagephobia.com/badge?p=@humanspeak/svelte-keyed)](https://packagephobia.com/result?p=@humanspeak/svelte-keyed)
 [![Code Style: Trunk](https://img.shields.io/badge/code%20style-trunk-blue.svg)](https://trunk.io)
 
-A **writable** derived store for objects and arrays!
+## Features
+
+- 🎯 **Type-Safe**: Full TypeScript support with automatic type inference
+- 🔄 **Reactive**: Deep object and array manipulation with automatic updates
+- 🎨 **Svelte 5 Ready**: Built for the latest Svelte features
+- 🪶 **Lightweight**: Zero dependencies, tiny bundle size
+- 🔒 **Null-Safe**: Built-in handling for nullable types
+- 🎮 **Easy API**: Simple dot notation for deep object access
+
+## Quick Start
 
 ```js
 const user = writable({ name: { first: 'Rich', last: 'Harris' } })
@@ -25,12 +36,19 @@ console.log($user) // { name: { first: 'Bryan', last: 'Harris' } };
 ## Installation
 
 ```bash
-
 npm i -D svelte-keyed
-
 ```
 
 Since Svelte automatically bundles all required dependencies, you only need to install this package as a dev dependency with the `-D` flag.
+
+## Why svelte-keyed?
+
+While Svelte's built-in stores are powerful, they don't provide an elegant way to work with nested properties. svelte-keyed solves this by:
+
+- Enabling direct manipulation of nested properties
+- Maintaining full TypeScript support
+- Providing a clean API for complex state management
+- Supporting both object and array access patterns
 
 ## API
 
