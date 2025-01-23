@@ -3,6 +3,7 @@ import type { Get } from 'type-fest'
 
 /**
  * Converts a string path with array notation into an array of tokens.
+ * Optimized version that avoids unnecessary string operations and uses a single pass.
  *
  * @param key - The path string to tokenize (e.g., "users[0].name" or "deeply.nested.property")
  * @returns An array of string tokens representing each path segment
@@ -14,11 +15,48 @@ import type { Get } from 'type-fest'
  * ```
  */
 export const getTokens = (key: string): string[] => {
-    let keyWithoutBracket = key.replace(/\[(\d+)\]/g, '.$1')
-    if (keyWithoutBracket.startsWith('.')) {
-        keyWithoutBracket = keyWithoutBracket.slice(1)
+    const tokens: string[] = []
+    let currentToken = ''
+    let i = 0
+    const len = key.length
+
+    while (i < len) {
+        const char = key[i]
+
+        if (char === '[') {
+            // If we have accumulated characters, push them as a token
+            if (currentToken) {
+                tokens.push(currentToken)
+                currentToken = ''
+            }
+            // Extract the array index
+            i++
+            let index = ''
+            while (i < len && key[i] !== ']') {
+                index += key[i]
+                i++
+            }
+            tokens.push(index)
+            i++ // Skip the closing bracket
+        } else if (char === '.') {
+            // Push accumulated token if exists
+            if (currentToken) {
+                tokens.push(currentToken)
+                currentToken = ''
+            }
+            i++
+        } else {
+            currentToken += char
+            i++
+        }
     }
-    return keyWithoutBracket.split('.')
+
+    // Push any remaining token
+    if (currentToken) {
+        tokens.push(currentToken)
+    }
+
+    return tokens
 }
 
 /**
