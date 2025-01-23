@@ -512,6 +512,7 @@ describe('Type Coercion', () => {
     it('should preserve number types', () => {
         const store = writable({ value: 42 })
         const value = keyed(store, 'value')
+        /* trunk-ignore(eslint/@typescript-eslint/no-explicit-any) */
         value.update((v) => v.toString() as any)
         expect(typeof get(store).value).toBe('string')
     })
@@ -527,6 +528,7 @@ describe('Type Coercion', () => {
 describe('Error Handling', () => {
     it('should handle non-existent nested paths gracefully', () => {
         const store = writable({ a: {} })
+        /* trunk-ignore(eslint/@typescript-eslint/no-explicit-any) */
         const deepValue = keyed(store, 'a.b.c.d' as any)
         expect(get(deepValue)).toBeUndefined()
     })
