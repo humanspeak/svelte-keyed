@@ -1,4 +1,4 @@
-import { get, writable } from 'svelte/store'
+import { derived, get, writable } from 'svelte/store'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { getTokens, keyed } from './index.js'
 
@@ -347,5 +347,117 @@ describe('keyed classes', () => {
         firstName.set('jane')
         age.set(11)
         expect(get(parent).name).toBeInstanceOf(NameC)
+    })
+})
+
+describe('Array Operations', () => {
+    it('should handle array push operations', () => {
+        const store = writable<{ items: string[] }>({ items: [] })
+        const items = keyed(store, 'items')
+        items.update((i) => [...i, 'new item'])
+        expect(get(store).items).toEqual(['new item'])
+    })
+
+    it('should handle array splice operations', () => {
+        const store = writable<{ items: number[] }>({ items: [1, 2, 3] })
+        const items = keyed(store, 'items')
+        items.update((i) => i.splice(1, 1))
+        expect(get(store).items).toEqual([2])
+    })
+})
+
+describe('Edge Cases', () => {
+    it('should handle circular references safely', () => {
+        const circular: { name: string; self?: object } = { name: 'test' }
+        circular.self = circular
+        const store = writable<typeof circular>(circular)
+        const name = keyed(store, 'name')
+        name.set('updated')
+        expect(get(store).name).toBe('updated')
+    })
+
+    it('should handle prototype chain properties', () => {
+        class Base {
+            baseProperty = 'base'
+        }
+        class Derived extends Base {
+            derivedProperty = 'derived'
+        }
+        const store = writable(new Derived())
+        const baseProp = keyed(store, 'baseProperty')
+        expect(get(baseProp)).toBe('base')
+    })
+
+    it('should reject __proto__ in path', () => {
+        const store = writable({})
+        expect(() => keyed(store, '__proto__')).toThrow()
+    })
+})
+
+describe('Type Safety', () => {
+    it('should handle undefined parent store', () => {
+        const store = writable<{ name: string } | undefined>(undefined)
+        const name = keyed(store, 'name')
+        expect(get(name)).toBeUndefined()
+    })
+
+    it('should handle null values in path', () => {
+        const store = writable({ user: null })
+        const name = keyed(store, 'user.name')
+        expect(get(name)).toBeUndefined()
+    })
+
+    it('should preserve literal types', () => {
+        const store = writable({ status: 'active' as 'active' | 'inactive' })
+        const status = keyed(store, 'status')
+        status.set('inactive')
+        // @ts-expect-error - should not compile
+        status.set('unknown')
+    })
+})
+
+describe('Performance', () => {
+    it('should not trigger unnecessary updates', () => {
+        const store = writable({ deep: { nested: { value: 1 } } })
+        const value = keyed(store, 'deep.nested.value')
+        let updateCount = 0
+        value.subscribe(() => updateCount++)
+        value.set(1) // Same value
+        expect(updateCount).toBe(1) // Only initial subscription
+    })
+
+    it('should handle large objects efficiently', () => {
+        const largeObject = Array(1000)
+            .fill(0)
+            .reduce(
+                (acc, _, i) => ({
+                    ...acc,
+                    [`prop${i}`]: i
+                }),
+                {}
+            )
+        const store = writable(largeObject)
+        const prop = keyed(store, 'prop999')
+        prop.set(1000)
+        expect(get(store).prop999).toBe(1000)
+    })
+})
+
+describe('Svelte Integration', () => {
+    it('should work with derived stores', () => {
+        const store = writable({ count: 1 })
+        const count = keyed(store, 'count')
+        const doubled = derived(count, ($count) => $count * 2)
+        expect(get(doubled)).toBe(2)
+    })
+
+    it('should handle store contract correctly', () => {
+        const store = writable({ value: 0 })
+        const value = keyed(store, 'value')
+
+        // Testing store contract
+        expect(value.subscribe).toBeDefined()
+        expect(value.set).toBeDefined()
+        expect(value.update).toBeDefined()
     })
 })
