@@ -1,38 +1,32 @@
 {
     "name": "@humanspeak/svelte-keyed",
     "version": "5.0.0",
-    "scripts": {
-        "dev": "vite dev",
-        "build": "vite build && npm run package",
-        "preview": "vite preview",
-        "package": "svelte-kit sync && svelte-package && publint",
-        "prepublishOnly": "npm run package",
-        "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-        "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-        "test": "vitest run --coverage",
-        "test:only": "vitest run",
-        "test:watch": "vitest",
-        "lint": "prettier --check . && eslint .",
-        "lint:fix": "npm run format && eslint . --fix",
-        "format": "prettier --write ."
+    "description": "A powerful writable derived store for Svelte that enables deep object and array manipulation with TypeScript support",
+    "keywords": [
+        "svelte",
+        "derived",
+        "store",
+        "rxjs",
+        "state-management",
+        "typescript",
+        "svelte5",
+        "sveltekit",
+        "reactive",
+        "nested-store",
+        "object-store",
+        "array-store"
+    ],
+    "homepage": "https://github.com/humanspeak/svelte-keyed#readme",
+    "bugs": {
+        "url": "https://github.com/humanspeak/svelte-keyed/issues"
     },
     "repository": {
         "type": "git",
         "url": "git+ssh://git@github.com/humanspeak/svelte-keyed.git"
     },
-    "keywords": [
-        "svelte",
-        "sveltejs",
-        "derived",
-        "store",
-        "rxjs"
-    ],
-    "author": "Humanspeak, Inc.",
     "license": "MIT",
-    "bugs": {
-        "url": "https://github.com/humanspeak/svelte-keyed/issues"
-    },
-    "homepage": "https://github.com/humanspeak/svelte-keyed#readme",
+    "author": "Humanspeak, Inc.",
+    "type": "module",
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
@@ -40,35 +34,60 @@
             "default": "./dist/index.js"
         }
     },
+    "svelte": "./dist/index.js",
+    "types": "./dist/index.d.ts",
     "files": [
         "dist",
         "!dist/**/*.test.*",
         "!dist/**/*.spec.*"
     ],
+    "scripts": {
+        "build": "vite build && npm run package",
+        "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+        "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+        "dev": "vite dev",
+        "format": "prettier --write .",
+        "lint": "prettier --check . && eslint .",
+        "lint:fix": "npm run format && eslint . --fix",
+        "package": "svelte-kit sync && svelte-package && publint",
+        "prepublishOnly": "npm run package",
+        "preview": "vite preview",
+        "test": "vitest run --coverage",
+        "test:only": "vitest run",
+        "test:watch": "vitest"
+    },
     "devDependencies": {
-        "@sveltejs/adapter-auto": "^3.0.0",
-        "@sveltejs/kit": "^2.0.0",
-        "@sveltejs/package": "^2.0.0",
+        "@eslint/eslintrc": "^3.2.0",
+        "@eslint/js": "^9.18.0",
+        "@sveltejs/adapter-auto": "^4.0.0",
+        "@sveltejs/kit": "^2.16.1",
+        "@sveltejs/package": "^2.3.8",
         "@sveltejs/vite-plugin-svelte": "^3.0.0",
-        "@types/eslint": "8.56.0",
-        "@typescript-eslint/eslint-plugin": "^6.0.0",
-        "@typescript-eslint/parser": "^6.0.0",
-        "@vitest/coverage-v8": "^1.1.1",
-        "eslint": "^8.56.0",
-        "eslint-config-prettier": "^9.1.0",
-        "eslint-plugin-svelte": "^2.35.1",
-        "prettier": "^3.1.1",
-        "prettier-plugin-svelte": "^3.1.2",
+        "@typescript-eslint/eslint-plugin": "^8.21.0",
+        "@typescript-eslint/parser": "^8.21.0",
+        "@vitest/coverage-v8": "^3.0.3",
+        "eslint": "^9.18.0",
+        "eslint-config-prettier": "^10.0.1",
+        "eslint-plugin-svelte": "^2.46.1",
+        "globals": "^15.14.0",
+        "prettier": "^3.4.2",
+        "prettier-plugin-organize-imports": "^4.1.0",
+        "prettier-plugin-svelte": "^3.3.3",
         "publint": "^0.1.9",
         "svelte": "^4.2.7",
-        "svelte-check": "^3.6.0",
+        "svelte-check": "^4.1.4",
         "tslib": "^2.4.1",
         "type-fest": "^4.9.0",
-        "typescript": "^5.0.0",
+        "typescript": "^5.7.3",
         "vite": "^5.0.3",
-        "vitest": "^1.0.0"
+        "vitest": "^3.0.3"
     },
-    "svelte": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "type": "module"
+    "volta": {
+        "node": "22.13.1"
+    },
+    "overrides": {
+        "@sveltejs/kit": {
+            "cookie": "^0.7.0"
+        }
+    }
 }

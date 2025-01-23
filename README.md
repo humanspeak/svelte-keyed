@@ -1,13 +1,15 @@
-![svelte-keyed-banner](https://user-images.githubusercontent.com/42545742/145455110-0d90603a-5fb3-453a-a9ea-7c4e3b443913.png)
-
 # @humanspeak/svelte-keyed
 
-[![npm version](http://img.shields.io/npm/v/svelte-keyed.svg)](https://www.npmjs.com/package/humanspeak/svelte-keyed)
-[![npm downloads](https://img.shields.io/npm/dm/svelte-keyed.svg)](https://www.npmjs.com/package/humanspeak/svelte-keyed)
-![license](https://img.shields.io/npm/l/@humanspeak/svelte-keyed)
-![build](https://img.shields.io/github/actions/workflow/status/humanspeak/svelte-keyed/publish.yml)
+![svelte-keyed-banner](https://user-images.githubusercontent.com/42545742/145455110-0d90603a-5fb3-453a-a9ea-7c4e3b443913.png)
+
+[![npm version](http://img.shields.io/npm/v/@humanspeak/svelte-keyed.svg)](https://www.npmjs.com/package/humanspeak/svelte-keyed)
+![build](https://img.shields.io/github/actions/workflow/status/humanspeak/svelte-keyed/npm-publish.yml)
 [![coverage](https://coveralls.io/repos/github/humanspeak/svelte-keyed/badge.svg?branch=main)](https://coveralls.io/github/humanspeak/svelte-keyed?branch=main)
-[![size](https://img.shields.io/bundlephobia/min/@humanspeak/svelte-keyed)](https://bundlephobia.com/result?p=@humanspeak/svelte-keyed)
+[![Downloads](https://img.shields.io/npm/dm/@humanspeak/svelte-keyed.svg)](https://www.npmjs.com/package/@humanspeak/svelte-keyed)
+[![License](https://img.shields.io/npm/l/@humanspeak/svelte-keyed.svg)](https://github.com/humanspeak/svelte-keyed/blob/main/LICENSE)
+[![CodeQL](https://github.com/humanspeak/svelte-keyed/actions/workflows/codeql.yml/badge.svg)](https://github.com/humanspeak/svelte-keyed/actions/workflows/codeql.yml)
+[![Install size](https://packagephobia.com/badge?p=@humanspeak/svelte-keyed)](https://packagephobia.com/result?p=@humanspeak/svelte-keyed)
+[![Code Style: Trunk](https://img.shields.io/badge/code%20style-trunk-blue.svg)](https://trunk.io)
 
 A **writable** derived store for objects and arrays!
 
@@ -23,7 +25,9 @@ console.log($user) // { name: { first: 'Bryan', last: 'Harris' } };
 ## Installation
 
 ```bash
-$ npm i -D svelte-keyed
+
+npm i -D svelte-keyed
+
 ```
 
 Since Svelte automatically bundles all required dependencies, you only need to install this package as a dev dependency with the `-D` flag.
@@ -163,3 +167,11 @@ export const trackClicks = (node, clicks) => {
     }
 }
 ```
+
+## License
+
+MIT © [Humanspeak, Inc.](LICENSE)
+
+## Credits
+
+Made with ♥ by [Humanspeak](https://humanspeak.com)

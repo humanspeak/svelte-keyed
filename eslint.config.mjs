@@ -21,6 +21,7 @@ export default [
             '**/.DS_Store',
             '**/node_modules',
             'build',
+            'dist',
             '.svelte-kit',
             'package',
             '**/.env',
@@ -28,8 +29,7 @@ export default [
             '!**/.env.example',
             '**/pnpm-lock.yaml',
             '**/package-lock.json',
-            '**/*.test.ts',
-            'dist'
+            '**/yarn.lock'
         ]
     },
     ...compat.extends(
@@ -56,38 +56,6 @@ export default [
             parserOptions: {
                 extraFileExtensions: ['.svelte']
             }
-        },
-
-        rules: {
-            semi: ['warn', 'never'],
-            quotes: ['error', 'single'],
-            'dot-location': ['warn', 'property'],
-            'guard-for-in': ['warn'],
-            'no-multi-spaces': ['warn'],
-            yoda: ['warn', 'never'],
-            camelcase: ['error'],
-            'comma-style': ['warn'],
-            'comma-dangle': ['off', 'always-multiline'],
-            'block-spacing': ['warn'],
-            'keyword-spacing': ['warn'],
-            'no-trailing-spaces': ['warn'],
-            'no-unneeded-ternary': ['warn'],
-            'no-whitespace-before-property': ['warn'],
-            'object-curly-spacing': ['warn', 'always'],
-            'space-before-blocks': ['warn'],
-            'space-in-parens': ['warn'],
-            'arrow-spacing': ['warn'],
-            'no-duplicate-imports': ['error'],
-            'no-var': ['error'],
-            'prefer-const': ['error'],
-
-            'no-unused-vars': [
-                'warn',
-                {
-                    argsIgnorePattern: '^_',
-                    ignoreRestSiblings: true
-                }
-            ]
         }
     },
     {
