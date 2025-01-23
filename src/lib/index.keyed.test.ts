@@ -1,6 +1,6 @@
 import { derived, get, writable } from 'svelte/store'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { getTokens, keyed } from './index.js'
+import { keyed } from './index.js'
 
 interface User {
     name: Name
@@ -29,28 +29,6 @@ class NameC {
         public last: string
     ) {}
 }
-
-describe('get tokens', () => {
-    it('converts a chain of object props', () => {
-        const result = getTokens('a.b.c')
-        expect(result).toStrictEqual(['a', 'b', 'c'])
-    })
-
-    it('converts an array index', () => {
-        const result = getTokens('[3]')
-        expect(result).toStrictEqual(['3'])
-    })
-
-    it('converts consecutive array indices', () => {
-        const result = getTokens('[3][4][6]')
-        expect(result).toStrictEqual(['3', '4', '6'])
-    })
-
-    it('converts a mix of array indices and object props', () => {
-        const result = getTokens('a[3].b.c[4][5]')
-        expect(result).toStrictEqual(['a', '3', 'b', 'c', '4', '5'])
-    })
-})
 
 describe('shallow keyed object test', () => {
     let user: User
