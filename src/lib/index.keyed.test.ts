@@ -1,6 +1,6 @@
 import { derived, get, writable } from 'svelte/store'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { getTokens, keyed } from './index.js'
+import { keyed } from './index.js'
 
 interface User {
     name: Name
