@@ -1,6 +1,6 @@
-import { derived, get, writable } from 'svelte/store'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { get, writable } from 'svelte/store'
 import { keyed } from './index.js'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 interface User {
     name: Name
