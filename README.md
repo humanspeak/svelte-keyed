@@ -36,7 +36,9 @@ console.log($user) // { name: { first: 'Bryan', last: 'Harris' } };
 ## Installation
 
 ```bash
+
 npm i -D svelte-keyed
+
 ```
 
 Since Svelte automatically bundles all required dependencies, you only need to install this package as a dev dependency with the `-D` flag.
@@ -185,14 +187,6 @@ export const trackClicks = (node, clicks) => {
     }
 }
 ```
-
-## License
-
-MIT © [Humanspeak, Inc.](LICENSE)
-
-## Credits
-
-Made with ♥ by [Humanspeak](https://humanspeak.com)
 
 ## License
 
