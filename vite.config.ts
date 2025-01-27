@@ -8,7 +8,16 @@ export default defineConfig({
         globals: true,
         coverage: {
             reporter: 'lcov',
-            exclude: ['docs/**', '.trunk/**', '.svelte-kit/**', 'tests/**', 'src/routes/**']
+            provider: 'v8',
+            include: ['src/**/*.ts'],
+            exclude: [
+                'src/**/*.test.ts',
+                'docs/**',
+                '.trunk/**',
+                '.svelte-kit/**',
+                'tests/**',
+                'src/routes/**'
+            ]
         },
         reporters: ['verbose', ['junit', { outputFile: './junit-vitest.xml' }]]
     }

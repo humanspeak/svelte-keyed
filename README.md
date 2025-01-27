@@ -1,15 +1,28 @@
-![svelte-keyed-banner](https://user-images.githubusercontent.com/42545742/145455110-0d90603a-5fb3-453a-a9ea-7c4e3b443913.png)
-
 # @humanspeak/svelte-keyed
 
-[![npm version](http://img.shields.io/npm/v/svelte-keyed.svg)](https://www.npmjs.com/package/humanspeak/svelte-keyed)
-[![npm downloads](https://img.shields.io/npm/dm/svelte-keyed.svg)](https://www.npmjs.com/package/humanspeak/svelte-keyed)
-![license](https://img.shields.io/npm/l/@humanspeak/svelte-keyed)
-![build](https://img.shields.io/github/actions/workflow/status/humanspeak/svelte-keyed/publish.yml)
-[![coverage](https://coveralls.io/repos/github/humanspeak/svelte-keyed/badge.svg?branch=main)](https://coveralls.io/github/humanspeak/svelte-keyed?branch=main)
-[![size](https://img.shields.io/bundlephobia/min/@humanspeak/svelte-keyed)](https://bundlephobia.com/result?p=@humanspeak/svelte-keyed)
+![svelte-keyed-banner](https://user-images.githubusercontent.com/42545742/145455110-0d90603a-5fb3-453a-a9ea-7c4e3b443913.png)
 
-A **writable** derived store for objects and arrays!
+> A powerful TypeScript-first derived store for Svelte 5 that enables deep object and array manipulation with full reactivity.
+
+[![npm version](http://img.shields.io/npm/v/@humanspeak/svelte-keyed.svg)](https://www.npmjs.com/package/humanspeak/svelte-keyed)
+![build](https://img.shields.io/github/actions/workflow/status/humanspeak/svelte-keyed/npm-publish.yml)
+[![coverage](https://coveralls.io/repos/github/humanspeak/svelte-keyed/badge.svg?branch=main)](https://coveralls.io/github/humanspeak/svelte-keyed?branch=main)
+[![Downloads](https://img.shields.io/npm/dm/@humanspeak/svelte-keyed.svg)](https://www.npmjs.com/package/@humanspeak/svelte-keyed)
+[![License](https://img.shields.io/npm/l/@humanspeak/svelte-keyed.svg)](https://github.com/humanspeak/svelte-keyed/blob/main/LICENSE)
+[![CodeQL](https://github.com/humanspeak/svelte-keyed/actions/workflows/codeql.yml/badge.svg)](https://github.com/humanspeak/svelte-keyed/actions/workflows/codeql.yml)
+[![Install size](https://packagephobia.com/badge?p=@humanspeak/svelte-keyed)](https://packagephobia.com/result?p=@humanspeak/svelte-keyed)
+[![Code Style: Trunk](https://img.shields.io/badge/code%20style-trunk-blue.svg)](https://trunk.io)
+
+## Features
+
+- 🎯 **Type-Safe**: Full TypeScript support with automatic type inference
+- 🔄 **Reactive**: Deep object and array manipulation with automatic updates
+- 🎨 **Svelte 5 Ready**: Built for the latest Svelte features
+- 🪶 **Lightweight**: Zero dependencies, tiny bundle size
+- 🔒 **Null-Safe**: Built-in handling for nullable types
+- 🎮 **Easy API**: Simple dot notation for deep object access
+
+## Quick Start
 
 ```js
 const user = writable({ name: { first: 'Rich', last: 'Harris' } })
@@ -23,10 +36,21 @@ console.log($user) // { name: { first: 'Bryan', last: 'Harris' } };
 ## Installation
 
 ```bash
-$ npm i -D svelte-keyed
+
+npm i -D svelte-keyed
+
 ```
 
 Since Svelte automatically bundles all required dependencies, you only need to install this package as a dev dependency with the `-D` flag.
+
+## Why svelte-keyed?
+
+While Svelte's built-in stores are powerful, they don't provide an elegant way to work with nested properties. svelte-keyed solves this by:
+
+- Enabling direct manipulation of nested properties
+- Maintaining full TypeScript support
+- Providing a clean API for complex state management
+- Supporting both object and array access patterns
 
 ## API
 
@@ -163,3 +187,11 @@ export const trackClicks = (node, clicks) => {
     }
 }
 ```
+
+## License
+
+MIT © [Humanspeak, Inc.](LICENSE)
+
+## Credits
+
+Made with ♥ by [Humanspeak](https://humanspeak.com)
