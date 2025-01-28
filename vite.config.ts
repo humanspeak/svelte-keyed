@@ -16,7 +16,8 @@ export default defineConfig({
                 '.trunk/**',
                 '.svelte-kit/**',
                 'tests/**',
-                'src/routes/**'
+                'src/routes/**',
+                '*.config.js'
             ]
         },
         reporters: ['verbose', ['junit', { outputFile: './junit-vitest.xml' }]]
