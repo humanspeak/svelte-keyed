@@ -12,7 +12,7 @@ jobs:
         runs-on: ubuntu-24.04
 
         steps:
-            - uses: actions/stale@v9
+            - uses: actions/stale@v11
               with:
                   # PR specific settings
                   stale-pr-message: This PR is being marked as stale due to 30 days of inactivity. It will be closed in 5 days if no further activity occurs.
