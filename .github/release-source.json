@@ -2,11 +2,11 @@
     "files": {
         ".github/scripts/release-publication.mjs": "c03d90062b6fcb38e11f9bb4cb5fd8c9a14a34a56bb67870f64d81af43f56e8e",
         ".github/scripts/release-publication.test.mjs": "a6176fdcf61b0d118670ce1d43a09f39a12d4171e1ab6fed7960dfe048145ebf",
-        ".github/scripts/release-workflow.test.mjs": "7a9e393cad156ac86e19b4b6aa1c72afedd5a6012652c6459e288f501ab43609",
+        ".github/scripts/release-workflow.test.mjs": "3a131742d49cb7e643ddfbc91582a9c9722f7bce9cbb6976a1a4e9097ff77243",
         ".github/workflows/coveralls.yml": "4e92a83a53ab4c4ffbe7e27383ab3488435c93e8b91b44f728f0b9ce311d5994",
-        ".github/workflows/npm-publish.yml": "bf5d43aae4d5a4bca63955af84356329ef31aeb85e379f716b00f765eae53184",
+        ".github/workflows/npm-publish.yml": "122af9f83944baaaf84888820d3926129f15092db20dfceef56f82efda0d279a",
         ".github/workflows/run-tests.yml": "f9ffe81a4eca264698490391697ad5911cf2e723e13e282e6904bb732606a8b6"
     },
     "repository": "humanspeak/docs-kit",
-    "revision": "1ba2cdbd682d0c6c11e0937147919565d88b9949"
+    "revision": "cd74e655507ae20931f82f3bdb954503dce3bab3"
 }
