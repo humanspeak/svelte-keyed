@@ -1,4 +1,4 @@
-# Test workflow managed by humanspeak/svelte-diff shared release source
+# Test workflow managed by humanspeak/docs-kit shared release source
 name: Run tests
 
 permissions:
