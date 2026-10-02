@@ -1,3 +1,4 @@
+# Release safety managed by humanspeak/docs-kit .github/release-workflows/sync.py
 # 1. Workflow metadata
 name: Publish to NPM
 
@@ -13,7 +14,6 @@ on:
         branches:
             - main
         paths-ignore:
-            - .github/**
             - docs/**
             - PRD.md
             - README.md
@@ -34,9 +34,44 @@ on:
                 required: false
                 type: string
 
+# Pending runs may be replaced; neither every event nor trigger order is guaranteed.
+concurrency:
+    group: repository-release
+    cancel-in-progress: false
+
 jobs:
     # 3. Testing jobs (grouped together)
+    prepare:
+        runs-on: ubuntu-latest
+        outputs:
+            checkout_sha: ${{ steps.baseline.outputs.checkout_sha }}
+            ready: ${{ steps.baseline.outputs.ready }}
+            outcome: ${{ steps.baseline.outputs.outcome }}
+        steps:
+            # Sole bootstrap exception: read-only helper loading at original event SHA.
+            - name: Bootstrap baseline helper
+              uses: actions/checkout@v7 # zizmor: ignore[unpinned-uses]
+              with:
+                  ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
+                  persist-credentials: false
+                  fetch-depth: 0
+            - uses: actions/setup-node@v7 # zizmor: ignore[unpinned-uses]
+              with:
+                  node-version: 24
+            - name: Select tested baseline
+              id: baseline
+              env:
+                  EVENT_NAME: ${{ github.event_name }}
+                  EVENT_SHA: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
+                  EVENT_REF: ${{ github.ref }}
+                  PR_FOUND: ${{ github.event.pull_request.merged }}
+                  HAS_SKIP_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'skip-publish') }}
+                  INPUT_VERSION: ${{ github.event.inputs.version_bump }}
+              run: node .github/scripts/release-publication.mjs prepare
+
     build:
+        if: needs.prepare.outputs.ready == 'true'
+        needs: [prepare]
         runs-on: ubuntu-24.04
         strategy:
             matrix:
@@ -48,6 +83,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
               with:
+                  ref: ${{ needs.prepare.outputs.checkout_sha }}
                   persist-credentials: false
                   token: ${{ secrets.ACTIONS_KEY }}
 
@@ -59,7 +95,15 @@ jobs:
             - name: Install
               run: |
                   npm ci
-                  npm run build
+
+            - name: Check library types
+              run: npm run check
+
+            - name: Test release safety offline
+              run: node --test .github/scripts/*.test.mjs
+
+            - name: Build
+              run: npm run build
 
             - name: Test
               run: npm test --coverage
@@ -103,8 +147,12 @@ jobs:
 
     # 5. Publishing job (main deployment logic)
     publish-github-packages:
-        needs: [build, coverage-report]
+        if: needs.prepare.outputs.ready == 'true' && needs.build.result == 'success' && needs.coverage-report.result == 'success'
+        needs: [build, coverage-report, prepare]
         runs-on: ubuntu-24.04
+        env:
+            RELEASE_STATE: ${{ runner.temp }}/release-${{ github.run_id }}-${{ github.run_attempt }}.json
+            PREPARED_SHA: ${{ needs.prepare.outputs.checkout_sha }}
         permissions:
             contents: write
             packages: write
@@ -116,6 +164,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
               with:
+                  ref: ${{ needs.prepare.outputs.checkout_sha }}
                   persist-credentials: false
                   token: ${{ secrets.GITHUB_TOKEN }}
                   fetch-depth: 0
@@ -222,8 +271,13 @@ jobs:
 
                   echo "bump=$BUMP_TYPE" >> $GITHUB_OUTPUT
 
-            - name: Bump version
+            - name: Recheck tested main and initialize ownership
               if: steps.publish-check.outputs.should_publish == 'true'
+              id: ownership
+              run: node .github/scripts/release-publication.mjs begin
+
+            - name: Bump version
+              if: steps.ownership.outputs.ready == 'true'
               id: version
               env:
                   PR_TITLE: ${{ github.event.pull_request.title }}
@@ -244,9 +298,6 @@ jobs:
                   git config --global commit.gpgsign true
                   git config --global user.signingkey "$GPG_KEY_ID"
 
-                  # Set up authentication for push
-                  git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
-
                   # Validate bump type for security
                   case "$BUMP_TYPE" in
                     "major"|"minor"|"patch") ;;
@@ -257,12 +308,19 @@ jobs:
                   esac
 
                   # Get the new version number
-                  NEW_VERSION=$(npm version "$BUMP_TYPE" --no-git-tag-version)
+                  npm version "$BUMP_TYPE" --no-git-tag-version
+                  PACKAGE_VERSION=$(node -p "require('./package.json').version")
+                  NEW_VERSION="v${PACKAGE_VERSION}"
                   echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
                   # Escape special characters in PR title and URL
                   ESCAPED_TITLE=$(echo "$PR_TITLE" | sed 's/[`$"\]/\\&/g')
                   ESCAPED_URL=$(echo "$PR_URL" | sed 's/[`$"\]/\\&/g')
+
+                  # Set up authentication for push
+                  git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+
+                  node .github/scripts/release-publication.mjs validate
 
                   # Commit the version changes
                   git add package.json package-lock.json
@@ -277,54 +335,47 @@ jobs:
                   PR: ${ESCAPED_URL}"
 
                   # Push changes
-                  git push
-                  git push --tags
+                  node .github/scripts/release-publication.mjs push
 
             - name: Create Release
-              if: steps.publish-check.outputs.should_publish == 'true'
+              if: steps.ownership.outputs.ready == 'true'
               id: create_release
-              uses: softprops/action-gh-release@v2
-              with:
-                  tag_name: ${{ steps.version.outputs.new_version }}
-                  name: Release ${{ steps.version.outputs.new_version }}
-                  body: |
-                      Changes in this Release
-                      ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.custom_message || github.event.pull_request.title }}
-
-                      ${{ github.event_name == 'pull_request' && format('For more details, see the [Pull Request]({0})', github.event.pull_request.html_url) || '' }}
-                  draft: false
-                  prerelease: false
-                  make_latest: true
-                  generate_release_notes: false
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  NEW_VERSION: ${{ steps.version.outputs.new_version }}
+                  EVENT_NAME: ${{ github.event_name }}
+                  CUSTOM_MESSAGE: ${{ github.event.inputs.custom_message }}
+                  PR_TITLE: ${{ github.event.pull_request.title }}
+                  PR_URL: ${{ github.event.pull_request.html_url }}
+              run: |
+                  node .github/scripts/release-publication.mjs release
 
-            - name: Publish
-              if: steps.publish-check.outputs.should_publish == 'true'
+            - name: Prepare canonical publication
+              if: steps.ownership.outputs.ready == 'true'
               run: |
                   # Ensure we're publishing to the correct scope
                   rm -f ./.npmrc
                   npm config set @humanspeak:registry https://registry.npmjs.org/
-                  npm publish --provenance --access public
+                  node .github/scripts/release-publication.mjs registry-attempt
+
+            - name: Publish
+              id: canonical
+              if: steps.ownership.outputs.ready == 'true'
+              run: npm publish --provenance --access public
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}
 
+            - name: Record canonical publication
+              if: steps.canonical.outcome == 'success'
+              run: node .github/scripts/release-publication.mjs registry-success
+
             - name: Cleanup on failure
-              if: failure()
+              if: failure() && steps.ownership.outputs.ready == 'true' && steps.canonical.outcome != 'success'
               env:
-                  RELEASE_VERSION: ${{ steps.version.outputs.new_version }}
+                  CANONICAL_SUCCESS: ${{ steps.canonical.outcome }}
                   GITHUB_TOKEN: ${{ secrets.ACTIONS_KEY }}
               run: |
-                  # Validate version format first
-                  if [[ ! "$RELEASE_VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-                    echo "Invalid version format: $RELEASE_VERSION"
-                    exit 1
-                  fi
-
-                  # Proceed with cleanup only if validation passes
-                  gh release delete "$RELEASE_VERSION" --yes || true
-                  git tag -d "$RELEASE_VERSION" || true
-                  git push --delete origin "$RELEASE_VERSION" || true
+                  node .github/scripts/release-publication.mjs cleanup
 
             - name: Notify on failure
               if: failure()

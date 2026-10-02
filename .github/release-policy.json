@@ -1,0 +1,7 @@
+{
+    "manager": "npm",
+    "event": "pull_request",
+    "manifests": ["package.json"],
+    "lockfile": "package-lock.json",
+    "readme": "unchanged"
+}
